@@ -69,6 +69,8 @@ public:
         }
         std::cout << "\n";
     }
+    // O(1) clear
+    void clear() { size = 0; }
 };
 
 #endif
