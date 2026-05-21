@@ -1,0 +1,1 @@
+// TODO: TO jako pierwsze. Rozroznic skierowany i nieskierowany.

@@ -1,8 +1,9 @@
-#ifndef ARRAY_HPP
-#define ARRAY_HPP
+#ifndef DYNAMIC_ARRAY_HPP
+#define DYNAMIC_ARRAY_HPP
 
 #include <iostream>
 #include <cstdlib>
+#include <cassert>
 
 template <typename T>
 class DynamicArray {
@@ -10,28 +11,22 @@ private:
     T* data;
     int size;
     int capacity;
-    // Helper method to expand the capacity linearly when the array is full
-    // Adding only one element may be not time effective
+
     void resize() {
         capacity = capacity + (capacity / 2) + 1;
-
         T* newData = new T[capacity];
-
         for (int i = 0; i < size; ++i) {
             newData[i] = data[i];
         }
-
         delete[] data;
-
         data = newData;
     }
 
 public:
-    DynamicArray() : size(0), capacity(2) {
+    explicit DynamicArray(int initialCapacity = 2) : size(0), capacity(initialCapacity) {
         data = new T[capacity];
     }
 
-    // Prevent shallow copies
     DynamicArray(const DynamicArray&) = delete;
     DynamicArray& operator=(const DynamicArray&) = delete;
 
@@ -53,12 +48,14 @@ public:
         }
     }
 
-    // Overload [] operator for fast access
     T& operator[](int index) {
-        if (index < 0 || index >= size) {
-            std::cerr << "Fatal Error: Index " << index << " out of bounds in DynamicArray! Terminating program.\n";
-            std::exit(EXIT_FAILURE);
-        }
+        assert(index >= 0 && index < size && "Fatal Error: Index out of bounds!");
+        return data[index];
+    }
+
+
+    const T& operator[](int index) const {
+        assert(index >= 0 && index < size && "Fatal Error: Index out of bounds!");
         return data[index];
     }
 
