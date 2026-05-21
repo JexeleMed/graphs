@@ -14,11 +14,12 @@ class IGraph {
 protected:
     int numVertices;
     int numEdges;
+    int maxEdges;
     bool isDirected;
 
 public:
-    IGraph(int vertices, bool directed)
-        : numVertices(vertices), numEdges(0), isDirected(directed) {}
+    IGraph(int vertices, int expectedEdges, bool directed)
+        : numVertices(vertices), numEdges(0), maxEdges(expectedEdges), isDirected(directed) {}
 
     virtual ~IGraph() = default;
 
