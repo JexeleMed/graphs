@@ -75,3 +75,6 @@ Testing/
 
 # Wokrspace
 .idea/
+
+
+*.pdf
