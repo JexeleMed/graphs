@@ -1,7 +1,7 @@
 #ifndef PRIORITY_QUEUE_HPP
 #define PRIORITY_QUEUE_HPP
 
-#include "data_structures/DynamicArray.hpp"
+#include "data_structures/Array.hpp"
 #include <stdexcept>
 
 template <typename T>
@@ -9,7 +9,7 @@ class PriorityQueue {
 private:
     DynamicArray<T> heap;
 
-    // Funkcje pomocnicze do nawigacji po drzewie binarnym wewnątrz tablicy
+    // Helper functions to navigate
     int parent(int i) { return (i - 1) / 2; }
     int leftChild(int i) { return 2 * i + 1; }
     int rightChild(int i) { return 2 * i + 2; }
@@ -20,7 +20,7 @@ private:
         heap[j] = temp;
     }
 
-    // Przywracanie własności kopca w górę (po dodaniu elementu)
+    // Restoring heap up
     void heapifyUp(int index) {
         while (index > 0 && heap[parent(index)] > heap[index]) {
             swap(parent(index), index);
@@ -28,7 +28,7 @@ private:
         }
     }
 
-    // Przywracanie własności kopca w dół (po usunięciu elementu)
+    // Restoring heap down
     void heapifyDown(int index) {
         int minIndex = index;
         int left = leftChild(index);
@@ -57,13 +57,12 @@ public:
 
     T pop() {
         if (isEmpty()) {
-            // Wewnętrzny wyjątek logiki - nie powinien się zdarzyć przy poprawnym algorytmie
             throw std::runtime_error("PriorityQueue is empty!");
         }
 
         T result = heap[0];
 
-        // Zastępujemy korzeń (minimum) ostatnim elementem i naprawiamy kopiec w dół
+        // Replace root with last element and fix down
         heap[0] = heap[heap.getSize() - 1];
         heap.removeLast();
 
