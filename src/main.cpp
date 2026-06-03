@@ -121,8 +121,76 @@ static void runSPDemo() {
     SPAlgorithms::dijkstra(im, 0);
 }
 
+// Directed graph with negative weight used for Bellman-Ford:
+//
+// Vertices: 0 1 2 3 4
+// Edges (directed):
+//   0->1 weight  6
+//   0->2 weight  7
+//   1->2 weight  8
+//   1->3 weight -4
+//   1->4 weight  5
+//   2->4 weight -3
+//   3->0 weight  2
+//   4->3 weight  7
+//
+// Shortest paths from 0:
+//   to 0: 0  (itself)
+//   to 1: 6  (0->1)
+//   to 2: 7  (0->2)
+//   to 3: 2  (0->1->3, cost 6+(-4)=2)
+//   to 4: 4  (0->2->4, cost 7+(-3)=4)
+
+static void runBFDemo() {
+    std::cout << "\n========================================\n";
+    std::cout << " SP DEMO — Bellman-Ford (negative weights)\n";
+    std::cout << "========================================\n\n";
+
+    std::cout << "Graph:\n";
+    std::cout << "  Edges: 0->1(6), 0->2(7), 1->2(8), 1->3(-4),\n";
+    std::cout << "         1->4(5), 2->4(-3), 3->0(2), 4->3(7)\n\n";
+
+    const int V = 5, E = 8;
+
+    AdjacencyList al(V, E, true);
+    al.addEdge(0, 1,  6);
+    al.addEdge(0, 2,  7);
+    al.addEdge(1, 2,  8);
+    al.addEdge(1, 3, -4);
+    al.addEdge(1, 4,  5);
+    al.addEdge(2, 4, -3);
+    al.addEdge(3, 0,  2);
+    al.addEdge(4, 3,  7);
+
+    std::cout << "--- Representation: Adjacency List ---\n";
+    al.display();
+
+    std::cout << "\n[Bellman-Ford from vertex 0]\n";
+    SPAlgorithms::bellmanFord(al, 0);
+
+    std::cout << "\n[Dijkstra from vertex 0 — same graph, for comparison]\n";
+    SPAlgorithms::dijkstra(al, 0);
+
+    IncidenceMatrix im(V, E, true);
+    im.addEdge(0, 1,  6);
+    im.addEdge(0, 2,  7);
+    im.addEdge(1, 2,  8);
+    im.addEdge(1, 3, -4);
+    im.addEdge(1, 4,  5);
+    im.addEdge(2, 4, -3);
+    im.addEdge(3, 0,  2);
+    im.addEdge(4, 3,  7);
+
+    std::cout << "\n--- Representation: Incidence Matrix ---\n";
+    im.display();
+
+    std::cout << "\n[Bellman-Ford from vertex 0]\n";
+    SPAlgorithms::bellmanFord(im, 0);
+}
+
 int main() {
     runMSTDemo();
     runSPDemo();
+    runBFDemo();
     return 0;
 }
