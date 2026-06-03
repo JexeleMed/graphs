@@ -71,6 +71,9 @@ public:
     }
     // O(1) clear
     void clear() { size = 0; }
+
+    T* getData() { return data; }
+    const T* getData() const { return data; }
 };
 
 #endif
