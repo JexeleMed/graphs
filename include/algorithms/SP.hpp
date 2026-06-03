@@ -80,6 +80,66 @@ public:
         }
     }
 
+    static void bellmanFord(const IGraph& graph, int startVertex, bool showResult = true) {
+        int V = graph.getVerticesCount();
+
+        DynamicArray<int> distances(V);
+        DynamicArray<int> parents(V);
+
+        for (int i = 0; i < V; ++i) {
+            distances.append(INF);
+            parents.append(-1);
+        }
+        distances[startVertex] = 0;
+
+        // Collect all directed edges once
+        DynamicArray<Edge> neighbors;
+        struct RawEdge { int from, to, weight; };
+        DynamicArray<RawEdge> edges;
+
+        for (int u = 0; u < V; ++u) {
+            graph.getNeighbors(u, neighbors);
+            for (int i = 0; i < neighbors.getSize(); ++i) {
+                edges.append({u, neighbors[i].to, neighbors[i].weight});
+            }
+        }
+
+        // Relax all edges V-1 times
+        for (int iter = 0; iter < V - 1; ++iter) {
+            for (int i = 0; i < edges.getSize(); ++i) {
+                int u = edges[i].from;
+                int v = edges[i].to;
+                int w = edges[i].weight;
+                if (distances[u] != INF && distances[u] + w < distances[v]) {
+                    distances[v] = distances[u] + w;
+                    parents[v] = u;
+                }
+            }
+        }
+
+        // V-th relaxation detects negative cycles
+        bool negativeCycle = false;
+        for (int i = 0; i < edges.getSize(); ++i) {
+            int u = edges[i].from;
+            int v = edges[i].to;
+            int w = edges[i].weight;
+            if (distances[u] != INF && distances[u] + w < distances[v]) {
+                negativeCycle = true;
+                break;
+            }
+        }
+
+        if (showResult) {
+            if (negativeCycle) {
+                std::cout << "\n--- Output Bellman-Ford ---\n";
+                std::cout << "Negative cycle detected — shortest paths undefined.\n";
+                std::cout << "-----------------------------------\n";
+            } else {
+                displayResults("Bellman-Ford", startVertex, distances, parents);
+            }
+        }
+    }
+
 private:
     // Helper for printer
     static void displayResults(const std::string& algoName, int startVertex, const DynamicArray<int>& distances, const DynamicArray<int>& parents) {
