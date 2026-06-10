@@ -2,7 +2,7 @@
 #define PRIORITY_QUEUE_HPP
 
 #include "data_structures/Array.hpp"
-#include <stdexcept>
+#include <cassert>
 
 template <typename T>
 class PriorityQueue {
@@ -56,9 +56,7 @@ public:
     }
 
     T pop() {
-        if (isEmpty()) {
-            throw std::runtime_error("PriorityQueue is empty!");
-        }
+        assert(!isEmpty() && "PriorityQueue is empty!");
 
         T result = heap[0];
 
