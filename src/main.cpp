@@ -3,6 +3,7 @@
 #include "graph/IncidenceMatrix.hpp"
 #include "algorithms/MST.hpp"
 #include "algorithms/SP.hpp"
+#include "algorithms/MF.hpp"
 
 
 
@@ -188,9 +189,66 @@ static void runBFDemo() {
     SPAlgorithms::bellmanFord(im, 0);
 }
 
+// Directed flow network (CLRS, chapter on maximum flow):
+//
+// Vertices: 0 (source) 1 2 3 4 5 (sink)
+// Edges (directed, capacities):
+//   0->1 16, 0->2 13, 1->3 12, 2->1 4, 2->4 14,
+//   3->2 9, 3->5 20, 4->3 7, 4->5 4
+//
+// Known maximum flow from 0 to 5: 23
+
+static void runMFDemo() {
+    std::cout << "\n========================================\n";
+    std::cout << "  MF DEMO — directed flow network        \n";
+    std::cout << "========================================\n\n";
+
+    std::cout << "Graph:\n";
+    std::cout << "  Edges: 0->1(16), 0->2(13), 1->3(12), 2->1(4), 2->4(14),\n";
+    std::cout << "         3->2(9), 3->5(20), 4->3(7), 4->5(4)\n";
+    std::cout << "  Expected max flow 0 -> 5: 23\n\n";
+
+    const int V = 6, E = 9;
+
+    AdjacencyList al(V, E, true);
+    al.addEdge(0, 1, 16);
+    al.addEdge(0, 2, 13);
+    al.addEdge(1, 3, 12);
+    al.addEdge(2, 1, 4);
+    al.addEdge(2, 4, 14);
+    al.addEdge(3, 2, 9);
+    al.addEdge(3, 5, 20);
+    al.addEdge(4, 3, 7);
+    al.addEdge(4, 5, 4);
+
+    std::cout << "--- Representation: Adjacency List ---\n";
+    al.display();
+
+    std::cout << "\n[Ford-Fulkerson from 0 to 5]\n";
+    MFAlgorithms::fordFulkerson(al, 0, 5);
+
+    IncidenceMatrix im(V, E, true);
+    im.addEdge(0, 1, 16);
+    im.addEdge(0, 2, 13);
+    im.addEdge(1, 3, 12);
+    im.addEdge(2, 1, 4);
+    im.addEdge(2, 4, 14);
+    im.addEdge(3, 2, 9);
+    im.addEdge(3, 5, 20);
+    im.addEdge(4, 3, 7);
+    im.addEdge(4, 5, 4);
+
+    std::cout << "\n--- Representation: Incidence Matrix ---\n";
+    im.display();
+
+    std::cout << "\n[Ford-Fulkerson from 0 to 5]\n";
+    MFAlgorithms::fordFulkerson(im, 0, 5);
+}
+
 int main() {
     runMSTDemo();
     runSPDemo();
     runBFDemo();
+    runMFDemo();
     return 0;
 }
