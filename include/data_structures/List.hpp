@@ -41,12 +41,45 @@ public:
         }
     };
 
+    // Read-only iterator: lets range-for work on const lists
+    // (without it, const methods like display() fail to compile when instantiated)
+    class ConstIterator {
+    private:
+        const Node* current;
+    public:
+        explicit ConstIterator(const Node* node) : current(node) {}
+
+        const T& operator*() const {
+            return current->data;
+        }
+
+        ConstIterator& operator++() {
+            if (current != nullptr) {
+                current = current->next;
+            }
+            return *this;
+        }
+
+        bool operator!=(const ConstIterator& other) const {
+            return current != other.current;
+        }
+    };
+
     Iterator begin() {
         return Iterator(head);
     }
 
     Iterator end() {
         return Iterator(nullptr);
+    }
+
+    // Const overloads — picked automatically when the list itself is const
+    ConstIterator begin() const {
+        return ConstIterator(head);
+    }
+
+    ConstIterator end() const {
+        return ConstIterator(nullptr);
     }
 
     SinglyLinkedList() : head(nullptr), tail(nullptr), size(0) {}
