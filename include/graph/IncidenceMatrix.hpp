@@ -6,7 +6,7 @@
 #include <iostream>
 #include <iomanip>
 
-class IncidenceMatrix : public IGraph {
+class IncidenceMatrix final : public IGraph {
 private:
     int** matrix;
     DynamicArray<int> edgeWeights;

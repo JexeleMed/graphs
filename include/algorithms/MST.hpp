@@ -31,7 +31,9 @@ class MSTAlgorithms {
 public:
     static constexpr int INF = std::numeric_limits<int>::max();
 
-    static void prim(const IGraph& graph, bool showResult = true) {
+    // GraphT must provide: getVerticesCount(), getEdgesCount(), getNeighbors()
+    template <typename GraphT>
+    static void prim(const GraphT& graph, bool showResult = true) {
         int V = graph.getVerticesCount();
 
         DynamicArray<int>  key(V);    // cheapest known edge cost to reach each vertex
@@ -76,7 +78,8 @@ public:
         }
     }
 
-    static void kruskal(const IGraph& graph, bool showResult = true) {
+    template <typename GraphT>
+    static void kruskal(const GraphT& graph, bool showResult = true) {
         int V = graph.getVerticesCount();
         int E = graph.getEdgesCount();
 

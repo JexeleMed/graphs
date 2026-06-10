@@ -21,7 +21,9 @@ public:
     // Infinity represents lack of paths
     static constexpr int INF = std::numeric_limits<int>::max();
 
-    static void dijkstra(const IGraph& graph, int startVertex, bool showResult = true) {
+    // GraphT must provide: getVerticesCount(), getNeighbors()
+    template <typename GraphT>
+    static void dijkstra(const GraphT& graph, int startVertex, bool showResult = true) {
         int V = graph.getVerticesCount();
 
         DynamicArray<int> distances(V);
@@ -80,7 +82,8 @@ public:
         }
     }
 
-    static void bellmanFord(const IGraph& graph, int startVertex, bool showResult = true) {
+    template <typename GraphT>
+    static void bellmanFord(const GraphT& graph, int startVertex, bool showResult = true) {
         int V = graph.getVerticesCount();
 
         DynamicArray<int> distances(V);

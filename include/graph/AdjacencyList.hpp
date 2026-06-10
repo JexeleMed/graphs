@@ -5,7 +5,8 @@
 #include "data_structures/List.hpp"
 #include <iostream>
 
-class AdjacencyList : public IGraph {
+// "final" lets the compiler devirtualize calls when the concrete type is known
+class AdjacencyList final : public IGraph {
 private:
     // Index is a number of vertex
     // List contains all his exiting edges (target edge and weight)
