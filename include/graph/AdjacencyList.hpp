@@ -4,6 +4,7 @@
 #include "IGraph.hpp"
 #include "data_structures/List.hpp"
 #include <iostream>
+#include <cassert>
 
 // "final" lets the compiler devirtualize calls when the concrete type is known
 class AdjacencyList final : public IGraph {
@@ -26,7 +27,7 @@ public:
     }
 
     void addEdge(int from, int to, int weight) override {
-        if (numEdges >= maxEdges) return;
+        assert(numEdges < maxEdges && "addEdge: exceeded declared edge count!");
 
         // Add exiting edge
         listArray[from].append({to, weight});
@@ -52,7 +53,7 @@ public:
         for (int i = 0; i < numVertices; ++i) {
             std::cout << "[" << i << "] -> ";
             for (auto& edge : listArray[i]) {
-                std::cout << "(" << edge.to << ", in:" << edge.weight << ") ";
+                std::cout << "(" << edge.to << ", w:" << edge.weight << ") ";
             }
             std::cout << "\n";
         }

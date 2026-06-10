@@ -5,6 +5,7 @@
 #include "data_structures/Array.hpp"
 #include <iostream>
 #include <iomanip>
+#include <cassert>
 
 class IncidenceMatrix final : public IGraph {
 private:
@@ -36,7 +37,7 @@ public:
     }
 
     void addEdge(int from, int to, int weight) override {
-        if (currentEdgeIndex >= maxEdges) return; // Overflow protection
+        assert(currentEdgeIndex < maxEdges && "addEdge: exceeded declared edge count!");
 
         edgeWeights.append(weight);
 
