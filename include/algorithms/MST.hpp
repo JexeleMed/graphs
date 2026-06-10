@@ -5,9 +5,9 @@
 #include "data_structures/PriorityQueue.hpp"
 #include "data_structures/Array.hpp"
 #include "data_structures/UnionFind.hpp"
+#include "algorithms/Sort.hpp"
 #include <limits>
 #include <iostream>
-#include <algorithm>
 
 struct WeightedEdge {
     int from, to, weight;
@@ -98,7 +98,7 @@ public:
             }
         }
 
-        std::sort(edges.getData(), edges.getData() + edges.getSize());
+        Sort::heapSort(edges.getData(), edges.getSize());
 
         UnionFind uf(V);
         DynamicArray<WeightedEdge> mst(V - 1);
