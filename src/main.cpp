@@ -1,288 +1,180 @@
 #include <iostream>
+#include <fstream>
+#include "Parameters.h"
+#include "Utils.hpp"
 #include "graph/AdjacencyList.hpp"
 #include "graph/IncidenceMatrix.hpp"
 #include "algorithms/MST.hpp"
 #include "algorithms/SP.hpp"
 #include "algorithms/MF.hpp"
-#include "GraphGenerator.hpp"
-#include "Utils.hpp"
 
+namespace {
 
+using namespace Parameters;
 
-static void runMSTDemo() {
-    std::cout << "========================================\n";
-    std::cout << "  MST DEMO — undirected weighted graph  \n";
-    std::cout << "========================================\n\n";
-
-    std::cout << "Graph:\n";
-    std::cout << "  Vertices: 0 1 2 3 4\n";
-    std::cout << "  Edges: 0-1(2), 0-3(6), 1-2(3), 1-3(8), 1-4(5), 2-4(7), 3-4(9)\n\n";
-
-    const int V = 5, E = 7;
-
-    // --- Adjacency List ---
-    AdjacencyList al(V, E, false);
-    al.addEdge(0, 1, 2);
-    al.addEdge(0, 3, 6);
-    al.addEdge(1, 2, 3);
-    al.addEdge(1, 3, 8);
-    al.addEdge(1, 4, 5);
-    al.addEdge(2, 4, 7);
-    al.addEdge(3, 4, 9);
-
-    std::cout << "--- Representation: Adjacency List ---\n";
-    al.display();
-
-    std::cout << "\n[Prim]\n";
-    MSTAlgorithms::prim(al);
-
-    std::cout << "\n[Kruskal]\n";
-    MSTAlgorithms::kruskal(al);
-
-    // --- Incidence Matrix ---
-    IncidenceMatrix im(V, E, false);
-    im.addEdge(0, 1, 2);
-    im.addEdge(0, 3, 6);
-    im.addEdge(1, 2, 3);
-    im.addEdge(1, 3, 8);
-    im.addEdge(1, 4, 5);
-    im.addEdge(2, 4, 7);
-    im.addEdge(3, 4, 9);
-
-    std::cout << "\n--- Representation: Incidence Matrix ---\n";
-    im.display();
-
-    std::cout << "\n[Prim]\n";
-    MSTAlgorithms::prim(im);
-
-    std::cout << "\n[Kruskal]\n";
-    MSTAlgorithms::kruskal(im);
+bool algorithmMatchesProblem(Problems p, Algorithms a) {
+    if (a == Algorithms::allAlgorithms) {
+        return true;
+    }
+    switch (p) {
+        case Problems::mst:
+            return a == Algorithms::prim || a == Algorithms::kruskal;
+        case Problems::sp:
+            return a == Algorithms::dijkstra || a == Algorithms::bellmanFord;
+        case Problems::mf:
+            return a == Algorithms::fordFulkerson;
+        default:
+            return false;
+    }
 }
 
-// Directed graph used for Dijkstra:
-//
-// Vertices: 0 1 2 3 4
-// Edges (directed):
-//   0->1 weight 10
-//   0->2 weight 3
-//   1->3 weight 2
-//   2->1 weight 4
-//   2->3 weight 8
-//   2->4 weight 2
-//   3->4 weight 5
-//   4->3 weight 1
-//
-// Shortest paths from 0:
-//   to 0: 0  (itself)
-//   to 1: 7  (0->2->1)
-//   to 2: 3  (0->2)
-//   to 3: 9  (0->2->4->3)
-//   to 4: 5  (0->2->4)
+// Runs the selected algorithm(s) on one concrete representation.
+template <typename GraphT>
+void solveOn(const GraphData& data, const char* structureName) {
+    const bool directed = (problem != Problems::mst);
 
-static void runSPDemo() {
-    std::cout << "\n========================================\n";
-    std::cout << "   SP DEMO — directed weighted graph    \n";
-    std::cout << "========================================\n\n";
+    GraphT graph(data.vertices, data.edges.getSize(), directed);
+    Utils::fillGraph(data, graph);
 
-    std::cout << "Graph:\n";
-    std::cout << "  Vertices: 0 1 2 3 4\n";
-    std::cout << "  Edges: 0->1(10), 0->2(3), 1->3(2), 2->1(4),\n";
-    std::cout << "         2->3(8), 2->4(2), 3->4(5), 4->3(1)\n\n";
+    std::cout << "\n=== Structure: " << structureName << " ===\n";
+    graph.display();
 
-    const int V = 5, E = 8;
+    const bool all = (algorithm == Algorithms::allAlgorithms);
 
-    AdjacencyList al(V, E, true);
-    al.addEdge(0, 1, 10);
-    al.addEdge(0, 2, 3);
-    al.addEdge(1, 3, 2);
-    al.addEdge(2, 1, 4);
-    al.addEdge(2, 3, 8);
-    al.addEdge(2, 4, 2);
-    al.addEdge(3, 4, 5);
-    al.addEdge(4, 3, 1);
-
-    std::cout << "--- Representation: Adjacency List ---\n";
-    al.display();
-
-    std::cout << "\n[Dijkstra from vertex 0]\n";
-    SPAlgorithms::dijkstra(al, 0);
-
-    IncidenceMatrix im(V, E, true);
-    im.addEdge(0, 1, 10);
-    im.addEdge(0, 2, 3);
-    im.addEdge(1, 3, 2);
-    im.addEdge(2, 1, 4);
-    im.addEdge(2, 3, 8);
-    im.addEdge(2, 4, 2);
-    im.addEdge(3, 4, 5);
-    im.addEdge(4, 3, 1);
-
-    std::cout << "\n--- Representation: Incidence Matrix ---\n";
-    im.display();
-
-    std::cout << "\n[Dijkstra from vertex 0]\n";
-    SPAlgorithms::dijkstra(im, 0);
+    switch (problem) {
+        case Problems::mst:
+            if (all || algorithm == Algorithms::prim) {
+                std::cout << "\n[Prim]\n";
+                MSTAlgorithms::prim(graph);
+            }
+            if (all || algorithm == Algorithms::kruskal) {
+                std::cout << "\n[Kruskal]\n";
+                MSTAlgorithms::kruskal(graph);
+            }
+            break;
+        case Problems::sp:
+            if (all || algorithm == Algorithms::dijkstra) {
+                std::cout << "\n[Dijkstra from vertex " << vertexStart << "]\n";
+                SPAlgorithms::dijkstra(graph, vertexStart);
+            }
+            if (all || algorithm == Algorithms::bellmanFord) {
+                std::cout << "\n[Bellman-Ford from vertex " << vertexStart << "]\n";
+                SPAlgorithms::bellmanFord(graph, vertexStart);
+            }
+            break;
+        case Problems::mf:
+            if (all || algorithm == Algorithms::fordFulkerson) {
+                std::cout << "\n[Ford-Fulkerson from " << vertexStart
+                          << " to " << vertexEnd << "]\n";
+                MFAlgorithms::fordFulkerson(graph, vertexStart, vertexEnd);
+            }
+            break;
+        default:
+            break;
+    }
 }
 
-// Directed graph with negative weight used for Bellman-Ford:
-//
-// Vertices: 0 1 2 3 4
-// Edges (directed):
-//   0->1 weight  6
-//   0->2 weight  7
-//   1->2 weight  8
-//   1->3 weight -4
-//   1->4 weight  5
-//   2->4 weight -3
-//   3->0 weight  2
-//   4->3 weight  7
-//
-// Shortest paths from 0:
-//   to 0: 0  (itself)
-//   to 1: 6  (0->1)
-//   to 2: 7  (0->2)
-//   to 3: 2  (0->1->3, cost 6+(-4)=2)
-//   to 4: 4  (0->2->4, cost 7+(-3)=4)
-
-static void runBFDemo() {
-    std::cout << "\n========================================\n";
-    std::cout << " SP DEMO — Bellman-Ford (negative weights)\n";
-    std::cout << "========================================\n\n";
-
-    std::cout << "Graph:\n";
-    std::cout << "  Edges: 0->1(6), 0->2(7), 1->2(8), 1->3(-4),\n";
-    std::cout << "         1->4(5), 2->4(-3), 3->0(2), 4->3(7)\n\n";
-
-    const int V = 5, E = 8;
-
-    AdjacencyList al(V, E, true);
-    al.addEdge(0, 1,  6);
-    al.addEdge(0, 2,  7);
-    al.addEdge(1, 2,  8);
-    al.addEdge(1, 3, -4);
-    al.addEdge(1, 4,  5);
-    al.addEdge(2, 4, -3);
-    al.addEdge(3, 0,  2);
-    al.addEdge(4, 3,  7);
-
-    std::cout << "--- Representation: Adjacency List ---\n";
-    al.display();
-
-    std::cout << "\n[Bellman-Ford from vertex 0]\n";
-    SPAlgorithms::bellmanFord(al, 0);
-
-    std::cout << "\n[Dijkstra from vertex 0 — same graph, for comparison]\n";
-    SPAlgorithms::dijkstra(al, 0);
-
-    IncidenceMatrix im(V, E, true);
-    im.addEdge(0, 1,  6);
-    im.addEdge(0, 2,  7);
-    im.addEdge(1, 2,  8);
-    im.addEdge(1, 3, -4);
-    im.addEdge(1, 4,  5);
-    im.addEdge(2, 4, -3);
-    im.addEdge(3, 0,  2);
-    im.addEdge(4, 3,  7);
-
-    std::cout << "\n--- Representation: Incidence Matrix ---\n";
-    im.display();
-
-    std::cout << "\n[Bellman-Ford from vertex 0]\n";
-    SPAlgorithms::bellmanFord(im, 0);
-}
-
-// Directed flow network (CLRS, chapter on maximum flow):
-//
-// Vertices: 0 (source) 1 2 3 4 5 (sink)
-// Edges (directed, capacities):
-//   0->1 16, 0->2 13, 1->3 12, 2->1 4, 2->4 14,
-//   3->2 9, 3->5 20, 4->3 7, 4->5 4
-//
-// Known maximum flow from 0 to 5: 23
-
-static void runMFDemo() {
-    std::cout << "\n========================================\n";
-    std::cout << "  MF DEMO — directed flow network        \n";
-    std::cout << "========================================\n\n";
-
-    std::cout << "Graph:\n";
-    std::cout << "  Edges: 0->1(16), 0->2(13), 1->3(12), 2->1(4), 2->4(14),\n";
-    std::cout << "         3->2(9), 3->5(20), 4->3(7), 4->5(4)\n";
-    std::cout << "  Expected max flow 0 -> 5: 23\n\n";
-
-    const int V = 6, E = 9;
-
-    AdjacencyList al(V, E, true);
-    al.addEdge(0, 1, 16);
-    al.addEdge(0, 2, 13);
-    al.addEdge(1, 3, 12);
-    al.addEdge(2, 1, 4);
-    al.addEdge(2, 4, 14);
-    al.addEdge(3, 2, 9);
-    al.addEdge(3, 5, 20);
-    al.addEdge(4, 3, 7);
-    al.addEdge(4, 5, 4);
-
-    std::cout << "--- Representation: Adjacency List ---\n";
-    al.display();
-
-    std::cout << "\n[Ford-Fulkerson from 0 to 5]\n";
-    MFAlgorithms::fordFulkerson(al, 0, 5);
-
-    IncidenceMatrix im(V, E, true);
-    im.addEdge(0, 1, 16);
-    im.addEdge(0, 2, 13);
-    im.addEdge(1, 3, 12);
-    im.addEdge(2, 1, 4);
-    im.addEdge(2, 4, 14);
-    im.addEdge(3, 2, 9);
-    im.addEdge(3, 5, 20);
-    im.addEdge(4, 3, 7);
-    im.addEdge(4, 5, 4);
-
-    std::cout << "\n--- Representation: Incidence Matrix ---\n";
-    im.display();
-
-    std::cout << "\n[Ford-Fulkerson from 0 to 5]\n";
-    MFAlgorithms::fordFulkerson(im, 0, 5);
-}
-
-// Round trip: generator -> TSV file -> loader -> both representations -> MST.
-static void runFileDemo() {
-    std::cout << "\n========================================\n";
-    std::cout << " FILE DEMO — generate, save, load, solve \n";
-    std::cout << "========================================\n\n";
-
-    const std::string filename = "demo_graph.tsv";
-    GraphGenerator::generateAndSave(filename, 6, 60.0, GraphType::UNDIRECTED);
-
-    GraphData data;
-    if (!Utils::loadGraphData(filename, data)) {
-        return;
+int runSingleFile() {
+    if (inputFile.empty()) {
+        std::cerr << "ERROR! Single file mode requires an input file (-i FILE).\n";
+        return 1;
+    }
+    if (problem == Problems::undefined) {
+        std::cerr << "ERROR! No problem selected (-p VAL).\n";
+        return 1;
+    }
+    if (algorithm == Algorithms::undefined) {
+        std::cerr << "ERROR! No algorithm selected (-a VAL).\n";
+        return 1;
+    }
+    if (structure == Structures::undefined) {
+        std::cerr << "ERROR! No structure selected (-s VAL).\n";
+        return 1;
+    }
+    if (!algorithmMatchesProblem(problem, algorithm)) {
+        std::cerr << "ERROR! Algorithm " << static_cast<int>(algorithm)
+                  << " does not solve problem " << static_cast<int>(problem)
+                  << " (see --help).\n";
+        return 1;
     }
 
-    AdjacencyList al(data.vertices, data.edges.getSize(), false);
-    Utils::fillGraph(data, al);
+    GraphData data;
+    if (!Utils::loadGraphData(inputFile, data)) {
+        return 1;
+    }
 
-    std::cout << "\n--- Representation: Adjacency List ---\n";
-    al.display();
-    std::cout << "\n[Prim]\n";
-    MSTAlgorithms::prim(al);
+    // Vertex parameters make sense only for SP/MF and only within [0, V)
+    if (problem == Problems::sp || problem == Problems::mf) {
+        if (vertexStart < 0 || vertexStart >= data.vertices) {
+            std::cerr << "ERROR! Starting vertex (-c) must be in [0, "
+                      << data.vertices << ").\n";
+            return 1;
+        }
+    }
+    if (problem == Problems::mf) {
+        if (vertexEnd < 0 || vertexEnd >= data.vertices) {
+            std::cerr << "ERROR! End vertex (-e) must be in [0, "
+                      << data.vertices << ").\n";
+            return 1;
+        }
+        if (vertexEnd == vertexStart) {
+            std::cerr << "ERROR! Source and sink must differ for max flow.\n";
+            return 1;
+        }
+    }
 
-    IncidenceMatrix im(data.vertices, data.edges.getSize(), false);
-    Utils::fillGraph(data, im);
+    // Swapping cout's buffer sends every display()
+    // and algorithm printout to the file without changing their code
+    std::ofstream outFileStream;
+    std::streambuf* consoleBuf = nullptr;
+    if (!outputFile.empty()) {
+        outFileStream.open(outputFile);
+        if (!outFileStream) {
+            std::cerr << "ERROR! Cannot open output file: " << outputFile << "\n";
+            return 1;
+        }
+        consoleBuf = std::cout.rdbuf(outFileStream.rdbuf());
+    }
 
-    std::cout << "\n--- Representation: Incidence Matrix ---\n";
-    im.display();
-    std::cout << "\n[Prim]\n";
-    MSTAlgorithms::prim(im);
+    if (structure == Structures::allStructures || structure == Structures::incidenceMatrix) {
+        solveOn<IncidenceMatrix>(data, "Incidence matrix");
+    }
+    if (structure == Structures::allStructures || structure == Structures::adjacencyList) {
+        solveOn<AdjacencyList>(data, "Adjacency list");
+    }
+
+    if (consoleBuf != nullptr) {
+        std::cout.rdbuf(consoleBuf);
+        std::cout << "Solution saved to " << outputFile << "\n";
+    }
+    return 0;
 }
 
-int main() {
-    runMSTDemo();
-    runSPDemo();
-    runBFDemo();
-    runMFDemo();
-    runFileDemo();
-    return 0;
+int runBenchmark() {
+    std::cerr << "Benchmark mode is not implemented yet.\n";
+    return 1;
+}
+
+} // namespace
+
+int main(int argc, char** argv) {
+    // Skip argv[0]
+    if (readParameters(argc - 1, argv + 1) != 0) {
+        help();
+        return 1;
+    }
+
+    switch (runMode) {
+        case RunModes::help:
+            help();
+            return 0;
+        case RunModes::singleFile:
+            return runSingleFile();
+        case RunModes::benchmark:
+            return runBenchmark();
+        default:
+            std::cerr << "ERROR! No run mode selected (-f, -b or -h).\n";
+            help();
+            return 1;
+    }
 }
