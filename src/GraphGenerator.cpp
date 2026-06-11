@@ -14,9 +14,9 @@ namespace {
     };
 }
 
-void GraphGenerator::generateAndSave(const std::string& filename, int vertices, double density, GraphType type) {
-    assert(vertices >= 2 && "generateAndSave: at least 2 vertices required");
-    assert(density > 0.0 && density <= 100.0 && "generateAndSave: density must be in (0, 100]");
+void GraphGenerator::generate(GraphData& out, int vertices, double density, GraphType type) {
+    assert(vertices >= 2 && "generate: at least 2 vertices required");
+    assert(density > 0.0 && density <= 100.0 && "generate: density must be in (0, 100]");
 
     const bool directed = (type == GraphType::DIRECTED);
     const long long V = vertices;
@@ -28,6 +28,9 @@ void GraphGenerator::generateAndSave(const std::string& filename, int vertices, 
     if (targetEdges > maxEdges) targetEdges = maxEdges;
 
     std::mt19937 rng(std::random_device{}());
+
+    out.vertices = vertices;
+    out.edges.clear();
 
     DynamicArray<int> perm(vertices);
     for (int i = 0; i < vertices; ++i) {
@@ -44,15 +47,13 @@ void GraphGenerator::generateAndSave(const std::string& filename, int vertices, 
     // Flat V*V matrix marking already used pairs (no duplicates / self-loops)
     bool* used = new bool[V * V]();
 
-    DynamicArray<VertexPair> edges(static_cast<int>(targetEdges));
-
-    // Phase 1 — spanning tree
+    // Phase 1 — spanning tree (weights filled in at the end)
     for (int i = 1; i < vertices; ++i) {
         std::uniform_int_distribution<int> dist(0, i - 1);
         int from = perm[dist(rng)];
         int to = perm[i];
 
-        edges.append({from, to});
+        out.edges.append({from, to, 0});
         used[from * V + to] = true;
         if (!directed) {
             used[to * V + from] = true;   // undirected: pair blocked both ways
@@ -93,7 +94,7 @@ void GraphGenerator::generateAndSave(const std::string& filename, int vertices, 
             pool[k] = pool[j];
             pool[j] = tmp;
 
-            edges.append(pool[k]);
+            out.edges.append({pool[k].from, pool[k].to, 0});
         }
     }
 
@@ -103,14 +104,26 @@ void GraphGenerator::generateAndSave(const std::string& filename, int vertices, 
     if (maxWeight < 1) maxWeight = 1;
     std::uniform_int_distribution<int> weightDist(1, static_cast<int>(maxWeight));
 
+    for (int i = 0; i < out.edges.getSize(); ++i) {
+        out.edges[i].weight = weightDist(rng);
+    }
+
+    out.declaredEdges = out.edges.getSize();
+}
+
+void GraphGenerator::generateAndSave(const std::string& filename, int vertices, double density, GraphType type) {
+    GraphData data;
+    generate(data, vertices, density, type);
+
     std::ofstream out(filename);
     if (!out) {
         std::cerr << "Error: cannot open file for writing: " << filename << "\n";
         return;
     }
 
-    out << vertices << "\t" << edges.getSize() << "\n";
-    for (int i = 0; i < edges.getSize(); ++i) {
-        out << edges[i].from << "\t" << edges[i].to << "\t" << weightDist(rng) << "\n";
+    out << data.vertices << "\t" << data.edges.getSize() << "\n";
+    for (int i = 0; i < data.edges.getSize(); ++i) {
+        const RawEdge& e = data.edges[i];
+        out << e.from << "\t" << e.to << "\t" << e.weight << "\n";
     }
 }

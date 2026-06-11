@@ -7,9 +7,12 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 
-# Instructor's parameter-parsing library as a separate static library target.
-# PUBLIC include dir = usage requirement: every target that links against
-# `parameters` inherits the header location automatically.
+# default to -O3
+# unless the user explicitly asks for another build type
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
 add_library(parameters STATIC third_party/Parameters.cpp)
 target_include_directories(parameters PUBLIC ${CMAKE_SOURCE_DIR}/third_party)
 
