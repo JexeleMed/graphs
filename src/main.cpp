@@ -4,6 +4,8 @@
 #include "algorithms/MST.hpp"
 #include "algorithms/SP.hpp"
 #include "algorithms/MF.hpp"
+#include "GraphGenerator.hpp"
+#include "Utils.hpp"
 
 
 
@@ -245,10 +247,42 @@ static void runMFDemo() {
     MFAlgorithms::fordFulkerson(im, 0, 5);
 }
 
+// Round trip: generator -> TSV file -> loader -> both representations -> MST.
+static void runFileDemo() {
+    std::cout << "\n========================================\n";
+    std::cout << " FILE DEMO — generate, save, load, solve \n";
+    std::cout << "========================================\n\n";
+
+    const std::string filename = "demo_graph.tsv";
+    GraphGenerator::generateAndSave(filename, 6, 60.0, GraphType::UNDIRECTED);
+
+    GraphData data;
+    if (!Utils::loadGraphData(filename, data)) {
+        return;
+    }
+
+    AdjacencyList al(data.vertices, data.edges.getSize(), false);
+    Utils::fillGraph(data, al);
+
+    std::cout << "\n--- Representation: Adjacency List ---\n";
+    al.display();
+    std::cout << "\n[Prim]\n";
+    MSTAlgorithms::prim(al);
+
+    IncidenceMatrix im(data.vertices, data.edges.getSize(), false);
+    Utils::fillGraph(data, im);
+
+    std::cout << "\n--- Representation: Incidence Matrix ---\n";
+    im.display();
+    std::cout << "\n[Prim]\n";
+    MSTAlgorithms::prim(im);
+}
+
 int main() {
     runMSTDemo();
     runSPDemo();
     runBFDemo();
     runMFDemo();
+    runFileDemo();
     return 0;
 }
