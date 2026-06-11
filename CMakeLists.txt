@@ -7,16 +7,19 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
 
+# Instructor's parameter-parsing library as a separate static library target.
+# PUBLIC include dir = usage requirement: every target that links against
+# `parameters` inherits the header location automatically.
+add_library(parameters STATIC third_party/Parameters.cpp)
+target_include_directories(parameters PUBLIC ${CMAKE_SOURCE_DIR}/third_party)
+
 set(SOURCES
         src/main.cpp
         src/Utils.cpp
         src/GraphGenerator.cpp
-        # third_party/parser.cpp
 )
 
 add_executable(graphs ${SOURCES})
 
-target_include_directories(graphs PRIVATE
-        ${CMAKE_SOURCE_DIR}/include
-        # ${CMAKE_SOURCE_DIR}/third_party/parser
-)
+target_include_directories(graphs PRIVATE ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(graphs PRIVATE parameters)
