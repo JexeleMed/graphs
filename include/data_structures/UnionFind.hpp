@@ -22,6 +22,10 @@ public:
         delete[] rank;
     }
 
+    // Non-copyable: double free prevention
+    UnionFind(const UnionFind&) = delete;
+    UnionFind& operator=(const UnionFind&) = delete;
+
     // Path compression: flattens the tree on the way up
     int find(int x) {
         if (parent[x] != x) {
