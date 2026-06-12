@@ -44,6 +44,15 @@ void GraphGenerator::generate(GraphData& out, int vertices, double density, Grap
         perm[j] = tmp;
     }
 
+    // Move vertex 0 there to keep the "reachable from 0" guarantee.
+    for (int i = 1; i < vertices; ++i) {
+        if (perm[i] == 0) {
+            perm[i] = perm[0];
+            perm[0] = 0;
+            break;
+        }
+    }
+
     // Flat V*V matrix marking already used pairs (no duplicates / self-loops)
     bool* used = new bool[V * V]();
 
