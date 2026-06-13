@@ -78,3 +78,6 @@ Testing/
 
 
 *.pdf
+
+# Python
+__pycache__
