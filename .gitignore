@@ -81,3 +81,6 @@ Testing/
 
 # Python
 __pycache__
+
+# SNAP datasets (reproducible via scripts/fetch_snap.py)
+data/
