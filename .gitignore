@@ -84,3 +84,7 @@ __pycache__
 
 # SNAP datasets (reproducible via scripts/fetch_snap.py)
 data/
+
+
+# Latex fles
+*.tex
