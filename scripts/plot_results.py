@@ -18,7 +18,7 @@ import sys
 from collections import defaultdict
 
 import matplotlib
-matplotlib.use("Agg")          # no display needed; write files only
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -55,12 +55,30 @@ def aggregate(by_x):
     return xs, means, mins, maxes
 
 
-def plot_problem(problem, series_map, x_label, title, out_path):
+def series_colors(series_map):
+    """Pin one color per series so the linear and log figures match exactly.
+
+    Colors come from the active prop cycle in the sorted series order -- the
+    same order plot_problem iterates in, so both variants stay in sync.
+    """
+    cycle = plt.rcParams["axes.prop_cycle"].by_key()["color"]
+    return {key: cycle[i % len(cycle)]
+            for i, key in enumerate(sorted(series_map))}
+
+
+def plot_problem(problem, series_map, x_label, title, out_path,
+                 colors, log_x=False, log_y=False):
     fig, ax = plt.subplots(figsize=(8, 5))
-    for (algorithm, structure), by_x in sorted(series_map.items()):
-        xs, means, mins, maxes = aggregate(by_x)
-        line, = ax.plot(xs, means, marker="o", label=f"{algorithm} / {structure}")
-        ax.fill_between(xs, mins, maxes, color=line.get_color(), alpha=0.15)
+    for key in sorted(series_map):
+        algorithm, structure = key
+        xs, means, mins, maxes = aggregate(series_map[key])
+        ax.plot(xs, means, marker="o", color=colors[key],
+                label=f"{algorithm} / {structure}")
+        ax.fill_between(xs, mins, maxes, color=colors[key], alpha=0.15)
+    if log_x:
+        ax.set_xscale("log")
+    if log_y:
+        ax.set_yscale("log")
     ax.set_xlabel(x_label)
     ax.set_ylabel("time [us] (mean, shaded = min..max)")
     ax.set_title(title)
@@ -72,24 +90,30 @@ def plot_problem(problem, series_map, x_label, title, out_path):
     print(f"  wrote {os.path.relpath(out_path, ROOT)}")
 
 
-def plot_study(csv_path, x_column, x_label, name_prefix, study_label):
+def plot_study(csv_path, x_column, x_label, name_prefix, study_label, log_x):
     if not os.path.exists(csv_path):
         print(f"skip {study_label}: {os.path.relpath(csv_path, ROOT)} not found")
         return
     print(f"{study_label}:")
     data = load(csv_path, x_column)
     for problem, series_map in data.items():
+        colors = series_colors(series_map)
         title = f"{study_label} - {PROBLEM_TITLES.get(problem, problem)}"
         out_path = os.path.join(PLOTS_DIR, f"{name_prefix}_{problem}.png")
-        plot_problem(problem, series_map, x_label, title, out_path)
+        plot_problem(problem, series_map, x_label, title, out_path, colors)
+
+
+        log_path = os.path.join(PLOTS_DIR, f"{name_prefix}_{problem}_log.png")
+        plot_problem(problem, series_map, x_label, f"{title} [log]", log_path,
+                     colors, log_x=log_x, log_y=True)
 
 
 def main():
     os.makedirs(PLOTS_DIR, exist_ok=True)
     plot_study(STUDY_A_CSV, "vertices", "vertices",
-               "study_a", "Study A (size @ 50% density)")
+               "study_a", "Study A (size @ 50% density)", log_x=True)
     plot_study(STUDY_B_CSV, "density", "density [%]",
-               "study_b", "Study B (density sweep)")
+               "study_b", "Study B (density sweep)", log_x=False)
     if not os.listdir(PLOTS_DIR):
         sys.exit("No plots produced -- run run_research.py first.")
 
