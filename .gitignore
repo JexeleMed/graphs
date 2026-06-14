@@ -88,3 +88,6 @@ data/
 
 # Latex fles
 *.tex
+
+# Results are easy to generate. Run python scripts.
+results/
