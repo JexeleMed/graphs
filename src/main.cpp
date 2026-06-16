@@ -264,7 +264,135 @@ void benchStructure(const GraphData& data, const char* structName,
     }
 }
 
+// File-driven benchmark: the graph is fixed, so we build the structure once
+//  and run each algorithm over many iterations to average
+//  out measurement noise on the very same input.
+template <typename GraphT>
+void benchStructureFromFile(const GraphData& data, const char* structName,
+                            std::ofstream& csv, const std::string& timestamp,
+                            int densityPct, const Algorithms* algs, int algCount,
+                            Stats* stats) {
+    const bool directed = (problem != Problems::mst);
+    GraphT graph(data.vertices, data.edges.getSize(), directed);
+    Utils::fillGraph(data, graph);
+
+    for (int iter = 0; iter < iterations; ++iter) {
+        for (int i = 0; i < algCount; ++i) {
+            const long long us = timeAlgorithm(graph, algs[i]);
+
+            csv << timestamp << ',' << problemName(problem) << ','
+                << algorithmName(algs[i]) << ',' << structName << ','
+                << data.vertices << ',' << densityPct << ',' << iter << ','
+                << us << '\n';
+
+            stats[i].add(us);
+        }
+    }
+}
+
+// Benchmark on a real dataset loaded from a file instead of
+// a generated one. Same measurement protocol as the generator benchmark.
+int runBenchmarkFromFile() {
+    if (!validateCommonParameters()) {
+        return 1;
+    }
+    if (resultsFile.empty()) {
+        std::cerr << "ERROR! Benchmark mode requires a results file (-r FILE).\n";
+        return 1;
+    }
+    if (iterations < 1) {
+        std::cerr << "ERROR! Iteration count (-n) must be at least 1.\n";
+        return 1;
+    }
+
+    GraphData data;
+    if (!Utils::loadGraphData(inputFile, data)) {
+        return 1;
+    }
+
+    // SP/MF need endpoints, validated against the file's vertex count
+    if (problem == Problems::sp || problem == Problems::mf) {
+        if (vertexStart < 0) vertexStart = 0;
+        if (vertexStart >= data.vertices) {
+            std::cerr << "ERROR! Starting vertex (-c) must be in [0, " << data.vertices << ").\n";
+            return 1;
+        }
+    }
+    if (problem == Problems::mf) {
+        if (vertexEnd < 0) vertexEnd = data.vertices - 1;
+        if (vertexEnd >= data.vertices || vertexEnd == vertexStart) {
+            std::cerr << "ERROR! End vertex (-e) must be in [0, " << data.vertices
+                      << ") and differ from the source.\n";
+            return 1;
+        }
+    }
+
+    bool writeHeader;
+    {
+        std::ifstream probe(resultsFile);
+        writeHeader = !probe || probe.peek() == std::ifstream::traits_type::eof();
+    }
+    std::ofstream csv(resultsFile, std::ios::app);
+    if (!csv) {
+        std::cerr << "ERROR! Cannot open results file: " << resultsFile << "\n";
+        return 1;
+    }
+    if (writeHeader) {
+        csv << "timestamp,problem,algorithm,structure,vertices,density,iteration,time_us\n";
+    }
+
+    Algorithms algs[2];
+    const int algCount = algorithmsForRun(algs);
+    const bool useMatrix = (structure == Structures::allStructures ||
+                            structure == Structures::incidenceMatrix);
+    const bool useList   = (structure == Structures::allStructures ||
+                            structure == Structures::adjacencyList);
+
+    // Record the real density of the loaded graph so the CSV row is self-describing
+    const long long V = data.vertices;
+    const long long E = data.edges.getSize();
+    const long long maxE = (problem == Problems::mst) ? V * (V - 1) / 2 : V * (V - 1);
+    const int densityPct = (maxE > 0) ? static_cast<int>((100 * E + maxE / 2) / maxE) : 0;
+
+    const std::string timestamp = currentTimestamp();
+
+    // stats[0] = incidence matrix, stats[1] = adjacency list
+    Stats stats[2][2];
+
+    std::cout << "Benchmark (file): " << inputFile << ", problem=" << problemName(problem)
+              << ", V=" << V << ", E=" << E << ", density=" << densityPct
+              << "%, iterations=" << iterations << "\n";
+
+    if (useMatrix) {
+        benchStructureFromFile<IncidenceMatrix>(data, "incidenceMatrix", csv, timestamp,
+                                                densityPct, algs, algCount, stats[0]);
+    }
+    if (useList) {
+        benchStructureFromFile<AdjacencyList>(data, "adjacencyList", csv, timestamp,
+                                              densityPct, algs, algCount, stats[1]);
+    }
+
+    std::cout << "Results appended to " << resultsFile << "\n\n";
+    for (int s = 0; s < 2; ++s) {
+        const bool used = (s == 0) ? useMatrix : useList;
+        if (!used) continue;
+        const char* structName = (s == 0) ? "incidenceMatrix" : "adjacencyList";
+        for (int i = 0; i < algCount; ++i) {
+            const Stats& st = stats[s][i];
+            std::cout << structName << " / " << algorithmName(algs[i])
+                      << ": avg=" << (st.sum / static_cast<double>(st.n))
+                      << " us, min=" << st.mn << " us, max=" << st.mx
+                      << " us (n=" << st.n << ")\n";
+        }
+    }
+    return 0;
+}
+
 int runBenchmark() {
+    // A real dataset (-i FILE) routes to the file-driven benchmark
+    if (!inputFile.empty()) {
+        return runBenchmarkFromFile();
+    }
     if (!validateCommonParameters()) {
         return 1;
     }
